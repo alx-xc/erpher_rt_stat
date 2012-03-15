@@ -1,0 +1,23 @@
+erpher runtime statistic server config parameters
+=================================================
+
+stat_limit_n - not used
+stat_limit_t - not used
+stat_limit_cnt_h - not used
+stat_limit_cnt_m - not used
+log_procs_interval - interval to log system memory and processes, write
+  runtime stat file. Integer.
+
+rt_info_file - filename with runtime info (sum of memory, number of processes)
+rotate_interval - interval to rotate storage.
+  minute, hour, day, year, never, {dow, 0..7}
+debug - list of debug parameters
+  stat - statistic related
+  run - runtime related
+  file - file operations related
+
+storage_base - base part of storage file name
+keep_time - time in hours to keep storage files.
+flush_interval - interval in seconds to flush memory storage to file
+flush_number - number of information chunks to accumulate in memory before
+  flushing to file
