@@ -290,7 +290,8 @@ prepare_all(#est{log_procs_interval=T} = C) ->
     %Stp = prepare_stat(C#est{start=now(), pid=self()}),
     erlang:send_after(T, self(), log_procs),
     erlang:send_after(?STAT_T, self(), periodic_check), % for redundancy
-    prepare_storage(C).
+    prepare_storage(C),
+    prepare_web(C).
     
 %%-----------------------------------------------------------------------------
 %%
@@ -300,6 +301,23 @@ prepare_stat(St) ->
     ets:new(?STAT_TAB_M, [named_table, set, protected, {keypos,1}]),
     ets:new(?STAT_TAB_H, [named_table, set, protected, {keypos,1}]),
     St.
+
+%%
+%% @doc prepare web server which is used to serve worker monitoring page only
+%% @since 2011-08-17 13:40
+%%
+-spec prepare_web(#est{}) -> #est{}.
+
+prepare_web(#est{web_server=_WebConfig} = C) ->
+    Dispatch = [
+        {'_', [{'_', erpher_rt_stat_web_handler, []}]}
+    ],
+
+    cowboy:start_listener(my_http_listener, 100,
+        cowboy_tcp_transport, [{port, 8143}],
+        cowboy_http_protocol, [{dispatch, Dispatch}]
+    ),
+    C.
 
 %%-----------------------------------------------------------------------------
 %%

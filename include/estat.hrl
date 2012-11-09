@@ -9,6 +9,7 @@
     start          :: tuple(),     % server start time in now() format
     timer          :: reference(), % timer ref
     timer_log      :: reference(), % timer for log processes memory
+    web_server = []:: list(),
     storage = []   :: list(),
     storage_fd     :: pid(),       % current opened storage file
     storage_base   :: string(),    % file name base
