@@ -134,10 +134,10 @@ handle_cast(_Other, St) ->
     {noreply, St}.
 
 %------------------------------------------------------------------------------
-terminate(_, State) ->
+terminate(Reason, State) ->
+    mpln_p_debug:er({?MODULE, ?LINE, terminate, Reason}),
     New = do_flush(State),
     stop_storage(New),
-    mpln_p_debug:pr({?MODULE, terminate, ?LINE}, State#est.debug, run, 1),
     ok.
 
 %------------------------------------------------------------------------------
@@ -147,8 +147,8 @@ terminate(_, State) ->
 %%
 handle_info(timeout, State) ->
     mpln_p_debug:pr({?MODULE, 'info_timeout', ?LINE}, State#est.debug, run, 3),
-    St_p = log_procs(State),
-    New = periodic_check(St_p),
+    %St_p = log_procs(State),
+    New = periodic_check(State),
     {noreply, New};
 
 handle_info(periodic_check, State) ->
@@ -158,9 +158,9 @@ handle_info(periodic_check, State) ->
     {noreply, New};
 
 handle_info(log_procs, State) ->
-    mpln_p_debug:pr({?MODULE, 'log_procs', ?LINE}, State#est.debug, run, 6),
-    New = log_procs(State),
-    {noreply, New};
+    %mpln_p_debug:pr({?MODULE, 'log_procs', ?LINE}, State#est.debug, run, 6),
+    %New = log_procs(State),
+    {noreply, State};
 
 handle_info(_Req, State) ->
     mpln_p_debug:pr({?MODULE, 'info_other', ?LINE, _Req},
@@ -313,7 +313,7 @@ prepare_web(#est{web_server=_WebConfig} = C) ->
         {'_', [{'_', erpher_rt_stat_web_handler, []}]}
     ],
 
-    cowboy:start_listener(my_http_listener, 100,
+    {ok, Listener} = cowboy:start_listener(my_http_listener, 100,
         cowboy_tcp_transport, [{port, 8143}],
         cowboy_http_protocol, [{dispatch, Dispatch}]
     ),
@@ -332,7 +332,7 @@ prepare_storage(#est{storage_base=Base} = C) ->
         {ok, Fd} ->
             C#est{storage_fd=Fd, storage_start=now(), storage_cur_name=Name};
         {error, Reason} ->
-            mpln_p_debug:pr({?MODULE, 'prepare_all open error', ?LINE, Reason},
+            mpln_p_debug:pr({?MODULE, ?LINE, 'prepare_all open error', Name, Reason},
                             C#est.debug, run, 0),
             C
     end.
@@ -352,7 +352,7 @@ stop_storage(#est{storage_fd=Fd} = St) ->
 log_procs(#est{timer_log=Ref, log_procs_interval=T} = St) ->
     mpln_misc_run:cancel_timer(Ref),
     real_log_procs(St),
-    log_procs_info(St),
+    %log_procs_info(St),
     Nref = erlang:send_after(T * 1000, self(), log_procs),
     St#est{timer_log=Nref}.
 
@@ -416,12 +416,11 @@ one_proc_info(Pid) ->
 %% @doc sends sum of memory to be written to storage
 %%
 real_log_procs(St) ->
-    {Sum, Nproc} = Res = estat_misc:get_procs_info(),
-    erpher_rt_stat_info:write_rt_info(St, Res),
-    mpln_p_debug:pr({?MODULE, 'real_log_procs', ?LINE, Nproc, Sum},
-                    St#est.debug, stat, 4),
-    add('memory', 'num_proc', Nproc),
-    add('memory', 'memory_sum', Sum).
+    %{Sum, Nproc} = Res = estat_misc:get_procs_info(),
+    erpher_rt_stat_info:write_rt_info(St)
+    %add('memory', 'num_proc', Nproc),
+    %add('memory', 'memory_sum', Sum)
+    .
 
 %%-----------------------------------------------------------------------------
 %%
@@ -601,7 +600,7 @@ proceed_flush(#est{storage_fd=Fd} = St, List) ->
         ok ->
             ok;
         {error, Reason} ->
-            mpln_p_debug:pr({?MODULE, 'proceed_flush error', ?LINE, Reason},
+            mpln_p_debug:pr({?MODULE, ?LINE, 'proceed_flush error', Fd, Reason},
                             St#est.debug, run, 0)
     end,
     St#est{storage=[], flush_last=now()}.

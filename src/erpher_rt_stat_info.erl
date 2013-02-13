@@ -34,7 +34,7 @@
 %%% Exports
 %%%----------------------------------------------------------------------------
 
--export([write_rt_info/2]).
+-export([write_rt_info/2, write_rt_info/1]).
 
 %%%----------------------------------------------------------------------------
 %%% Includes
@@ -50,6 +50,24 @@
 %% @since 2012-02-14 15:45
 %%
 -spec write_rt_info(#est{}, tuple()) -> ok.
+
+write_rt_info(#est{rt_info_file=undefined}) ->
+    ok;
+
+write_rt_info(#est{rt_info_file=File} = St) ->
+    Data = [
+        {ts, erlang:list_to_binary(mpln_misc_time:get_time_str())},
+        {proc, length(processes())},
+        {mem, erlang:memory()}
+    ],
+    Str = io_lib:format("~ts", [lists:flatten(mochijson2:encode(Data))]),
+    Temp = File ++ ".tmp",
+    case file:write_file(Temp, Str) of
+        ok ->
+            rename_files(St, File, Temp);
+        Other ->
+            mpln_p_debug:er({?MODULE, ?LINE, 'write_rt_info error', Other})
+    end.
 
 write_rt_info(#est{rt_info_file=undefined}, _Res) ->
     ok;

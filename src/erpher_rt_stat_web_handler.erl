@@ -68,6 +68,11 @@ get_resource(Req, [H | T]) ->
             cowboy_http_req:reply(404, [], "404 Not Found\r\n", Req)
     end,
     {ok, Req};
+%% main page
+get_resource(Req, []) ->
+    cowboy_http_req:reply(200, [{'Content-Type', "text/html"}], <<"common<br/><a href='/all/stats'>stats</a><br/><a href='/all/versions'>versions</a><br/><br/>ecomet<br/><a href='/ec/rt'>current</a><br/><br/>ejobman<br/><a href='/ej/stat_t'>stat</a>">>, Req),
+    {ok, Req};
+%% others
 get_resource(Req, _Path) ->
     cowboy_http_req:reply(404, [], "404 Not Found\r\n", Req),
     {ok, Req}.
@@ -78,6 +83,22 @@ get_resource(Req, _Path) ->
 %%
 -spec get_app_content(any(), any(), any()) -> any().
 
+%% common statistics
+get_app_content(_Req, <<"all">>, Path) ->
+    [Path2 | _Path2T] = Path,
+    case Path2 of
+        <<"versions">> ->
+            Apps = application:loaded_applications(),
+            Data = lists:map(fun({App, _Desc, Version}) -> {App, unicode:characters_to_binary(Version)} end, Apps);
+        _ ->
+            Data = [
+                {ts, erlang:list_to_binary(mpln_misc_time:get_time_str())},
+                {proc, length(processes())},
+                {mem, erlang:memory()}
+            ]
+    end,
+    Text = io_lib:format("~ts", [lists:flatten(mochijson2:encode(Data))]),
+    {ok, Text};
 get_app_content(_Req, <<"ej">>, Path) ->
     [Path2 | _Path2T] = Path,
     Size = 1000,
@@ -95,13 +116,19 @@ get_app_content(_Req, <<"ej">>, Path) ->
         <<"rss">> ->
             Text = ejobman_handler:stat_rss(Size);
         _ ->
-            Text = ejobman_log:get_last_jobs("html", Size)
+            Text = ejobman_stat:make_stat_t_info_html()
     end,
     {ok, Text};
-get_app_content(_Req, <<"ec">>, _Path) ->
-    Dat = ecomet_server:get_stat_raw(),
-    Res = estat_misc:make_interval_stat(text, Dat),
-    {ok, Res};
+get_app_content(_Req, <<"ec">>, Path) ->
+    [Path2 | _Path2T] = Path,
+    case Path2 of
+        <<"rt">> ->
+            Data = ecomet_server:get_stat_procs_mem();
+        _ ->
+            Data = ecomet_server:get_stat_procs_mem()
+    end,
+    Text = io_lib:format("~ts", [lists:flatten(mochijson2:encode(Data))]),
+    {ok, Text};
 get_app_content(_Req, <<"ew">>, _Path) ->
     Res = eworkman_handler:get_status2(),
     {_, Str} = eworkman_worker_web_page:create_html_status(Res),
