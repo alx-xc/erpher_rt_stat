@@ -70,7 +70,7 @@ get_resource(Req, [H | T]) ->
     {ok, Req};
 %% main page
 get_resource(Req, []) ->
-    cowboy_http_req:reply(200, [{'Content-Type', "text/html"}], <<"common<br/><a href='/all/stats'>stats</a><br/><a href='/all/versions'>versions</a><br/><br/>ecomet<br/><a href='/ec/rt'>current</a><br/><br/>ejobman<br/><a href='/ej/stat_t'>stat</a>">>, Req),
+    cowboy_http_req:reply(200, [{'Content-Type', "text/html"}], <<"common<br/><a href='/all/stats'>stats</a><br/><a href='/all/versions'>versions</a><br/><br/>ecomet<br/><a href='/ec/rt'>current</a><br/><a href='/ec/prc'>processes</a><br/><br/>ejobman<br/><a href='/ej/stat_t'>stat</a>">>, Req),
     {ok, Req};
 %% others
 get_resource(Req, _Path) ->
@@ -124,6 +124,8 @@ get_app_content(_Req, <<"ec">>, Path) ->
     case Path2 of
         <<"rt">> ->
             Data = ecomet_server:get_stat_procs_mem();
+        <<"prc">> ->
+            Data = ecomet_server:get_stat_procs();
         _ ->
             Data = ecomet_server:get_stat_procs_mem()
     end,
