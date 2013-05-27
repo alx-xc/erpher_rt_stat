@@ -1,7 +1,7 @@
 {application, erpher_rt_stat, [
     {description, "erpher runtime statistic"},
     {id, "erpher_rt_stat"},
-    {vsn, "0.0.6"},
+    {vsn, "0.0.7"},
     {modules, [
         erpher_rt_stat_app,
         erpher_rt_stat_conf,
