@@ -85,22 +85,30 @@ fill_config_stat(List) ->
         stat_limit_n = proplists:get_value(stat_limit_n, List, ?STAT_LIMIT_N),
         stat_limit_t = proplists:get_value(stat_limit_t, List, ?STAT_LIMIT_T),
         % time limit for working/queued counters
-        stat_limit_cnt_h = proplists:get_value(stat_limit_cnt_h, List,
-                                             ?STAT_LIMIT_CT_H),
-        stat_limit_cnt_m = proplists:get_value(stat_limit_cnt_m, List,
-                                             ?STAT_LIMIT_CT_M),
+        stat_limit_cnt_h = proplists:get_value(stat_limit_cnt_h, List, ?STAT_LIMIT_CT_H),
+        stat_limit_cnt_m = proplists:get_value(stat_limit_cnt_m, List, ?STAT_LIMIT_CT_M),
 
-        log_procs_interval = proplists:get_value(log_procs_interval, List,
-                                                 ?LOG_PROCS_INTERVAL),
+        log_procs_interval = proplists:get_value(log_procs_interval, List, ?LOG_PROCS_INTERVAL),
         rt_info_file = proplists:get_value(rt_info_file, List),
         rotate_interval = proplists:get_value(rotate_interval, List, 'hour'),
         debug = proplists:get_value(debug, List, []),
         storage_base = proplists:get_value(storage_base, List, ?STAT_STORAGE),
         keep_time = proplists:get_value(keep_time, List, ?STAT_KEEP_TIME),
-        flush_interval = proplists:get_value(flush_interval, List,
-                                             ?STAT_FLUSH_INTERVAL),
-        flush_number = proplists:get_value(flush_number, List,
-                                             ?STAT_FLUSH_NUMBER)
+        flush_interval = proplists:get_value(flush_interval, List, ?STAT_FLUSH_INTERVAL),
+        flush_number = proplists:get_value(flush_number, List, ?STAT_FLUSH_NUMBER),
+        web_server = fill_config_web(proplists:get_value(web_server, List, []))
+    }.
+
+%%-----------------------------------------------------------------------------
+%%
+%% @doc gets data from the list of key-value tuples and stores it into record
+%% @since 2013-04-29 12:11
+%%
+-spec fill_config_web(list()) -> #est_web{}.
+
+fill_config_web(List) ->
+    #est_web{
+        port = proplists:get_value(port, List, ?STAT_WEB_PORT)
     }.
 
 %%-----------------------------------------------------------------------------

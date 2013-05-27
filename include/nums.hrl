@@ -28,4 +28,6 @@
 -define(STAT_TAB_M, ejobman_stat_t_m).
 -define(STAT_TAB_H, ejobman_stat_t_h).
 
+-define(STAT_WEB_PORT, 8143).
+
 -endif.

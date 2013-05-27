@@ -30,4 +30,9 @@
     debug
 }).
 
+% ejobman stats web config
+-record(est_web, {
+    port :: non_neg_integer()
+}).
+
 -endif.

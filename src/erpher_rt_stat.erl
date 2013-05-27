@@ -308,13 +308,13 @@ prepare_stat(St) ->
 %%
 -spec prepare_web(#est{}) -> #est{}.
 
-prepare_web(#est{web_server=_WebConfig} = C) ->
+prepare_web(#est{web_server = WebConfig} = C) ->
     Dispatch = [
         {'_', [{'_', erpher_rt_stat_web_handler, []}]}
     ],
 
     {ok, Listener} = cowboy:start_listener(my_http_listener, 100,
-        cowboy_tcp_transport, [{port, 8143}],
+        cowboy_tcp_transport, [{port, WebConfig#est_web.port}],
         cowboy_http_protocol, [{dispatch, Dispatch}]
     ),
     C.
@@ -416,7 +416,7 @@ one_proc_info(Pid) ->
 %% @doc sends sum of memory to be written to storage
 %%
 real_log_procs(St) ->
-    %{Sum, Nproc} = Res = estat_misc:get_procs_info(),
+    {Sum, Nproc} = Res = estat_misc:get_procs_info(),
     erpher_rt_stat_info:write_rt_info(St)
     %add('memory', 'num_proc', Nproc),
     %add('memory', 'memory_sum', Sum)
@@ -460,16 +460,13 @@ upd_job_stat(Time, Tag, Work, Queued) ->
     upd_hourly_job_stat(Time, Tag, Work, Queued).
 
 upd_minute_job_stat(Time, Tag, Work, Queued) ->
-    estat_misc:set_max_timed_stat(?STAT_TAB_M, 'minute', Time, {Tag, 'work'},
-                                  Work),
-    estat_misc:set_max_timed_stat(?STAT_TAB_M, 'minute', Time, {Tag, 'queued'},
-                                  Queued).
+    erlang:display({?MODULE, ?LINE, upd_minute_job_stat, Time, Tag, Work, Queued}),
+    estat_misc:set_max_timed_stat(?STAT_TAB_M, 'minute', Time, {Tag, 'work'},  Work),
+    estat_misc:set_max_timed_stat(?STAT_TAB_M, 'minute', Time, {Tag, 'queued'}, Queued).
 
 upd_hourly_job_stat(Time, Tag, Work, Queued) ->
-    estat_misc:set_max_timed_stat(?STAT_TAB_H, 'hour', Time, {Tag, 'work'},
-                                  Work),
-    estat_misc:set_max_timed_stat(?STAT_TAB_H, 'hour', Time, {Tag, 'queued'},
-                                  Queued).
+    estat_misc:set_max_timed_stat(?STAT_TAB_H, 'hour', Time, {Tag, 'work'}, Work),
+    estat_misc:set_max_timed_stat(?STAT_TAB_H, 'hour', Time, {Tag, 'queued'}, Queued).
 
 
 %%-----------------------------------------------------------------------------
