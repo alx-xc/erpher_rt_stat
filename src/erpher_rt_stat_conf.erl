@@ -96,7 +96,8 @@ fill_config_stat(List) ->
         keep_time = proplists:get_value(keep_time, List, ?STAT_KEEP_TIME),
         flush_interval = proplists:get_value(flush_interval, List, ?STAT_FLUSH_INTERVAL),
         flush_number = proplists:get_value(flush_number, List, ?STAT_FLUSH_NUMBER),
-        web_server = fill_config_web(proplists:get_value(web_server, List, []))
+        web_server = fill_config_web(proplists:get_value(web_server, List, [])),
+        storage_on = proplists:get_value(storage_on, List, true)
     }.
 
 %%-----------------------------------------------------------------------------

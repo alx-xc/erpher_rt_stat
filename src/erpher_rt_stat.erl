@@ -325,15 +325,12 @@ prepare_web(#est{web_server = WebConfig} = C) ->
 %%
 prepare_storage(#est{storage_base=Base} = C) ->
     Name = mpln_misc_log:get_fname(Base),
-    mpln_p_debug:pr({?MODULE, 'prepare_storage', ?LINE, Name},
-                    C#est.debug, file, 2),
     filelib:ensure_dir(Name),
     case file:open(Name, [append, raw, binary]) of
         {ok, Fd} ->
             C#est{storage_fd=Fd, storage_start=now(), storage_cur_name=Name};
         {error, Reason} ->
-            mpln_p_debug:pr({?MODULE, ?LINE, 'prepare_all open error', Name, Reason},
-                            C#est.debug, run, 0),
+            mpln_p_debug:er({?MODULE, ?LINE, 'prepare_storage file open error', Name, Reason}),
             C
     end.
 
@@ -349,6 +346,10 @@ stop_storage(#est{storage_fd=Fd} = St) ->
 %%
 %% @doc logs memory information, establishes a new timer for the next iteration
 %%
+log_procs(#est{timer_log=Ref, rt_info_file=undefined} = St) ->
+    mpln_misc_run:cancel_timer(Ref),
+    St;
+
 log_procs(#est{timer_log=Ref, log_procs_interval=T} = St) ->
     mpln_misc_run:cancel_timer(Ref),
     real_log_procs(St),
@@ -460,7 +461,6 @@ upd_job_stat(Time, Tag, Work, Queued) ->
     upd_hourly_job_stat(Time, Tag, Work, Queued).
 
 upd_minute_job_stat(Time, Tag, Work, Queued) ->
-    erlang:display({?MODULE, ?LINE, upd_minute_job_stat, Time, Tag, Work, Queued}),
     estat_misc:set_max_timed_stat(?STAT_TAB_M, 'minute', Time, {Tag, 'work'},  Work),
     estat_misc:set_max_timed_stat(?STAT_TAB_M, 'minute', Time, {Tag, 'queued'}, Queued).
 
@@ -558,8 +558,10 @@ check_rotate(#est{storage_start=Start, rotate_interval=Rotate} = St) ->
 %%
 -spec check_flush(#est{}) -> #est{}.
 
-check_flush(#est{storage=S, flush_interval=T, flush_last=Last,
-                 flush_number=N} = St) ->
+check_flush(#est{storage_on = false} = St) ->
+    St#est{storage=[], flush_last=now()};
+
+check_flush(#est{storage=S, flush_interval=T, flush_last=Last, flush_number=N} = St) ->
     St_f = check_existing_file(St),
     Len = length(S),
     Delta = timer:now_diff(now(), Last),
@@ -578,8 +580,7 @@ check_flush(#est{storage=S, flush_interval=T, flush_last=Last,
 do_flush(#est{storage=S} = St) ->
     List = lists:reverse(S),
     L2 = lists:map(fun(X) -> create_binary_item(St, X) end, List),
-    mpln_p_debug:pr({?MODULE, 'do_flush', ?LINE, L2},
-                    St#est.debug, run, 6),
+    mpln_p_debug:pr({?MODULE, 'do_flush', ?LINE, L2}, St#est.debug, run, 6),
     proceed_flush(St, L2).
 
 %%-----------------------------------------------------------------------------
@@ -587,6 +588,9 @@ do_flush(#est{storage=S} = St) ->
 %% @doc proceeds with flushing
 %%
 proceed_flush(St, []) ->
+    St#est{storage=[], flush_last=now()};
+
+proceed_flush(#est{storage_on = false} = St, _List) ->
     St#est{storage=[], flush_last=now()};
 
 proceed_flush(#est{storage_fd=Fd} = St, List) ->

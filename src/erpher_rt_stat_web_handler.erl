@@ -128,6 +128,7 @@ get_app_content(_Req, <<"all">>, Path) ->
             Data = [
                 {ts, erlang:list_to_binary(mpln_misc_time:get_time_str())},
                 {proc, length(processes())},
+                {ports, length(erlang:ports())},
                 {mem, erlang:memory()}
             ]
     end,
